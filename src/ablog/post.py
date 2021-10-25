@@ -10,6 +10,7 @@ from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst.directives.admonitions import BaseAdmonition
 from feedgen.feed import FeedGenerator
 from sphinx.locale import get_translation
+from sphinx.util.i18n import format_date
 from sphinx.transforms import SphinxTransform
 from sphinx.util.nodes import set_source_info
 
@@ -39,6 +40,17 @@ _ = get_translation(MESSAGE_CATALOG_NAME)  # NOQA
 
 def _split(a):
     return {s.strip() for s in (a or "").split(",")}
+
+
+class BabelDateTime(datetime):
+    """
+    datetime subclass to properly handle strftime
+    """
+
+    language = None
+
+    def strftime(self, format):
+        return format_date(format, self, self.language)
 
 
 class PostNode(nodes.Element):
@@ -252,7 +264,7 @@ def _get_section_title(section):
     # references, e.g. :ref:`tag-tips`
 
 
-def _get_update_dates(section, docname, post_date_format):
+def _get_update_dates(section, docname, post_date_format, language):
     """
     Return list of dates of updates found section.
     """
@@ -260,7 +272,8 @@ def _get_update_dates(section, docname, post_date_format):
     update_dates = []
     for update_node in update_nodes:
         try:
-            update = datetime.strptime(update_node["date"], post_date_format)
+            update = BabelDateTime.strptime(update_node["date"], post_date_format)
+            update.language = language
         except ValueError:
             if date_parser:
                 try:
@@ -319,7 +332,7 @@ def process_posts(app, doctree):
             section = doctree
         # get updates here, in the section that post belongs to
         # Might there be orphan updates?
-        update_dates = _get_update_dates(section, docname, post_date_format)
+        update_dates = _get_update_dates(section, docname, post_date_format, app.config.language)
         # Making sure that post has a title because all post titles
         # are needed when resolving post lists in documents
         title = node["title"] or _get_section_title(section)
@@ -351,7 +364,8 @@ def process_posts(app, doctree):
         date = node["date"]
         if date:
             try:
-                date = datetime.strptime(date, post_date_format)
+                date = BabelDateTime.strptime(date, post_date_format)
+                date.language = app.config.language
             except ValueError:
                 if date_parser:
                     try:
