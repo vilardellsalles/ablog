@@ -1,4 +1,5 @@
 import os
+import re
 import logging
 from string import Formatter
 from datetime import datetime
@@ -48,6 +49,18 @@ class BabelDateTime(datetime):
     """
 
     language = None
+
+    @classmethod
+    def ptime(cls, date_string, format, language=None):
+        num_hyphens = format.count("-")
+        i = 0
+        valid_format = format
+        while i < num_hyphens:
+            valid_format = re.sub(r"%-(?=[a-zA-Z])", "%", format)
+            i += 1
+        cls.language = language
+        return cls.strptime(date_string, valid_format)
+        
 
     def strftime(self, format):
         return format_date(format, self, self.language)
@@ -272,7 +285,7 @@ def _get_update_dates(section, docname, post_date_format, language):
     update_dates = []
     for update_node in update_nodes:
         try:
-            update = BabelDateTime.strptime(update_node["date"], post_date_format)
+            update = BabelDateTime.ptime(update_node["date"], post_date_format)
             update.language = language
         except ValueError:
             if date_parser:
@@ -364,7 +377,7 @@ def process_posts(app, doctree):
         date = node["date"]
         if date:
             try:
-                date = BabelDateTime.strptime(date, post_date_format)
+                date = BabelDateTime.ptime(date, post_date_format)
                 date.language = app.config.language
             except ValueError:
                 if date_parser:
