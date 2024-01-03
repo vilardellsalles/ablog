@@ -2,6 +2,7 @@ import os
 import re
 import logging
 from string import Formatter
+from locale import getlocale
 from datetime import datetime
 
 import jinja2
