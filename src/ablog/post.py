@@ -63,7 +63,7 @@ class BabelDateTime(datetime):
         
 
     def strftime(self, format):
-        return format_date(format, self, self.language)
+        return format_date(format, date=self, language=self.language)
 
 
 class PostNode(nodes.Element):
