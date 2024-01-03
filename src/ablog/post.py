@@ -48,7 +48,9 @@ class BabelDateTime(datetime):
     datetime subclass to properly handle strftime
     """
 
-    language = None
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self.language = getlocale()[0]
 
     @classmethod
     def ptime(cls, date_string, format, language=None):
@@ -60,7 +62,6 @@ class BabelDateTime(datetime):
             i += 1
         cls.language = language
         return cls.strptime(date_string, valid_format)
-        
 
     def strftime(self, format):
         return format_date(format, date=self, language=self.language)
